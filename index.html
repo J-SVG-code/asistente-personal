@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Asistente Personal Autónomo</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#1e293b">
     <style>
         :root { --bg: #0f172a; --panel: #1e293b; --accent: #3b82f6; --text: #f8fafc; }
         body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 15px; }
@@ -30,22 +32,30 @@
 
     <!-- Historial de Conversación -->
     <div class="chat-box" id="chatBox">
-        <div class="msg ai">¡Qué tal! Estoy listo y a tus órdenes. ¿Qué se te ofrece hacer hoy?</div>
+        <div class="msg ai">¡Qué tal! Estoy configurado como PWA. Ya puedes instalarme en tu teléfono para trabajar sin conexión y en segundo plano. ¿Qué se te ofrece?</div>
     </div>
 
     <!-- Controles de Entrada y Verificación -->
     <div class="controls">
-        <textarea id="userInput" placeholder="Escribe tu orden o conversación aquí..."></textarea>
-        <input type="password" id="masterCode" placeholder="🔒 PIN Maestro (para comandos críticos)">
+        <textarea id="userInput" placeholder="Escribe tu orden o instrucción aquí..."></textarea>
+        <input type="password" id="masterCode" placeholder="🔒 PIN Maestro (7777)">
         <button class="btn-main" onclick="procesarEntrada()">Enviar Instrucción</button>
     </div>
 </div>
 
 <script>
-    const PIN_MAESTRO = "7777"; // Tu PIN personal para autorizaciones
+    const PIN_MAESTRO = "7777"; 
     let memoriaLocal = JSON.parse(localStorage.getItem("memoria_asistente") || "[]");
 
-    // Detectar estado de la conexión a internet
+    // Registrar el Service Worker para funcionamiento en segundo plano y offline
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('./service-worker.js')
+                .then(reg => console.log('Service Worker registrado con éxito:', reg.scope))
+                .catch(err => console.log('Error al registrar el Service Worker:', err));
+        });
+    }
+
     function actualizarRed() {
         const status = document.getElementById("netStatus");
         if (navigator.onLine) {
@@ -87,17 +97,12 @@
             return;
         }
 
-        // Guardar en la memoria local persistente
         memoriaLocal.push({ fecha: new Date().toISOString(), entrada: texto });
         localStorage.setItem("memoria_asistente", JSON.stringify(memoriaLocal));
 
-        if (navigator.onLine) {
-            agregarMensaje("Procesando tu instrucción con la red en línea...", "ai");
-        } else {
-            setTimeout(() => {
-                agregarMensaje("Estamos sin conexión a internet, pero ya guardé esto en mi memoria local y ejecuté la acción en tu dispositivo.", "ai");
-            }, 500);
-        }
+        setTimeout(() => {
+            agregarMensaje("Instrucción registrada y respaldada en la memoria local del dispositivo de forma persistente.", "ai");
+        }, 400);
     }
 </script>
 
