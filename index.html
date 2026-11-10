@@ -14,8 +14,8 @@
         .status-badge { padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; }
         .online { background: #10b981; color: #000; }
         .offline { background: #f59e0b; color: #000; }
-        .chat-box { height: 280px; overflow-y: auto; background: #090d16; border-radius: 8px; padding: 12px; margin-bottom: 15px; font-size: 14px; line-height: 1.5; }
-        .msg { margin-bottom: 10px; padding: 8px 12px; border-radius: 8px; max-width: 85%; }
+        .chat-box { height: 300px; overflow-y: auto; background: #090d16; border-radius: 8px; padding: 12px; margin-bottom: 15px; font-size: 14px; line-height: 1.5; white-space: pre-line; }
+        .msg { margin-bottom: 10px; padding: 8px 12px; border-radius: 8px; max-width: 90%; }
         .msg.user { background: #2563eb; margin-left: auto; color: white; }
         .msg.ai { background: #334155; color: #f8fafc; }
         .controls input, .controls textarea { width: 100%; box-sizing: border-box; background: #090d16; color: #fff; border: 1px solid #475569; padding: 10px; border-radius: 6px; margin-bottom: 10px; }
@@ -32,14 +32,18 @@
 
     <!-- Historial de Conversación -->
     <div class="chat-box" id="chatBox">
-        <div class="msg ai">¡Sistema actualizado y listo! Escríbeme lo que quieras para probar mis respuestas interactivas.</div>
+        <div class="msg ai">¡Sistematoolbox activo! Puedo hacer cálculos, guardar notas, darte la hora y ejecutar comandos seguros con tu PIN (7777). Pruebame escribiendo:
+- "calcula 50 * 20"
+- "nota Comprar suministros"
+- "mis notas"
+- "hora"</div>
     </div>
 
     <!-- Controles de Entrada y Verificación -->
     <div class="controls">
         <textarea id="userInput" placeholder="Escribe tu orden o instrucción aquí..."></textarea>
         <input type="password" id="masterCode" placeholder="🔒 PIN Maestro (7777)">
-        <button class="btn-main" onclick="procesarEntrada()">Enviar Instrucción</button>
+        <button class="btn-main" onclick="procesarEntrada()">Ejecutar Acción</button>
     </div>
 </div>
 
@@ -82,35 +86,57 @@
         input.value = "";
 
         const textoMinus = texto.toLowerCase();
-        const requierePin = textoMinus.includes("crear") || textoMinus.includes("borrar") || textoMinus.includes("ejecutar");
+        let respuestaIA = "";
 
+        // Verificación de comandos protegidos por PIN
+        const requierePin = textoMinus.includes("borrar") || textoMinus.includes("limpiar memoria");
         if (requierePin && pin !== PIN_MAESTRO) {
-            agregarMensaje("🔒 Acción denegada: Necesitas ingresar el PIN Maestro correcto (7777) para ejecutar comandos del sistema.", "ai");
+            agregarMensaje("🔒 Acción denegada: Necesitas ingresar el PIN Maestro correcto (7777) para ejecutar comandos críticos.", "ai");
             return;
         }
 
-        // Guardar en memoria local
-        memoriaLocal.push({ fecha: new Date().toISOString(), entrada: texto });
-        localStorage.setItem("memoria_asistente", JSON.stringify(memoriaLocal));
-
-        // Respuestas dinámicas e inteligentes reales
-        setTimeout(() => {
-            let respuestaIA = `Has consultado sobre: "${texto}". Entendido y registrado en la memoria local del sistema.`;
-
-            if (textoMinus.includes("hola") || textoMinus.includes("saludos") || textoMinus.includes("hey")) {
-                respuestaIA = "¡Hola! Sistema en línea y operativo. ¿Qué operativas realizaremos hoy?";
-            } else if (textoMinus.includes("que puedes") || textoMinus.includes("capaz") || textoMinus.includes("funciones")) {
-                respuestaIA = "Puedo gestionar registros locales, procesar comandos seguros mediante PIN, mantener memoria persistente y funcionar como tu herramienta autónoma.";
-            } else if (textoMinus.includes("memoria") || textoMinus.includes("recuerda") || textoMinus.includes("cuantos")) {
-                respuestaIA = `Actualmente tengo registrados ${memoriaLocal.length} eventos en la memoria local de este dispositivo.`;
-            } else if (textoMinus.includes("estado") || textoMinus.includes("sistema")) {
-                respuestaIA = "Estado del sistema: Almacenamiento local activo, interfaz responsiva y controles de seguridad enlazados.";
-            } else if (textoMinus.includes("americo") || textoMinus.includes("américa")) {
-                respuestaIA = "El continente americano toma su nombre de Américo Vespucio, navegante italiano que cartografió gran parte de su costa.";
+        // Lógica de Toolbox y ejecución de tareas reales
+        if (textoMinus.startsWith("calcula ") || textoMinus.startsWith("calcular ")) {
+            try {
+                let expresion = texto.replace(/calcula|calcular/gi, '').trim();
+                let resultado = eval(expresion);
+                respuestaIA = `🧮 Resultado de (${expresion}) = ${resultado}`;
+            } catch (e) {
+                respuestaIA = "⚠️ No pude procesar esa operación matemática. Revisa la sintaxis.";
             }
+        } else if (textoMinus.startsWith("nota ") || textoMinus.startsWith("anotar ")) {
+            let contenidoNota = texto.replace(/nota|anotar/gi, '').trim();
+            let notas = JSON.parse(localStorage.getItem("mis_notas") || "[]");
+            notas.push(contenidoNota);
+            localStorage.setItem("mis_notas", JSON.stringify(notas));
+            respuestaIA = `📝 Nota guardada con éxito en el dispositivo.\nTotal de notas: ${notas.length}`;
+        } else if (textoMinus.includes("mis notas" ) || textoMinus.includes("ver notas")) {
+            let notas = JSON.parse(localStorage.getItem("mis_notas") || "[]");
+            if (notas.length === 0) {
+                respuestaIA = "📭 No tienes notas guardadas todavía. Escribe 'nota [tu texto]' para crear una.";
+            } else {
+                respuestaIA = "📋 Tus notas guardadas:\n" + notas.map((n, i) => `${i + 1}. ${n}`).join("\n");
+            }
+        } else if (textoMinus.includes("hora") || textoMinus.includes("fecha") || textoMinus.includes("tiempo")) {
+            respuestaIA = `🕒 Fecha y hora actual: ${new Date().toLocaleString()}`;
+        } else if (textoMinus.includes("estado") || textoMinus.includes("sistema")) {
+            let notasCount = JSON.parse(localStorage.getItem("mis_notas") || "[]").length;
+            respuestaIA = `⚙️ Estado del Sistema:\n- Almacenamiento local: Activo\n- Registros en memoria: ${memoriaLocal.length}\n- Notas guardadas: ${notasCount}\n- Conectividad: ${navigator.onLine ? 'Online' : 'Offline'}`;
+        } else if (textoMinus.startsWith("borrar memoria") || textoMinus.startsWith("limpiar memoria")) {
+            localStorage.removeItem("memoria_asistente");
+            localStorage.removeItem("mis_notas");
+            memoriaLocal = [];
+            respuestaIA = "🗑️ Memoria y notas eliminadas por completo utilizando el PIN Maestro.";
+        } else if (textoMinus.includes("hola") || textoMinus.includes("saludos")) {
+            respuestaIA = "¡Hola! Tu toolbox autónomo está listo para operar. ¿Qué tarea ejecutamos?";
+        } else {
+            // Registro general de entradas
+            memoriaLocal.push({ fecha: new Date().toISOString(), entrada: texto });
+            localStorage.setItem("memoria_asistente", JSON.stringify(memoriaLocal));
+            respuestaIA = `✅ Orden procesada y registrada: "${texto}". (Tip: Puedes pedirme calcular operaciones, tomar notas, ver la hora o consultar el estado del sistema).`;
+        }
 
-            agregarMensaje(respuestaIA, "ai");
-        }, 300);
+        agregarMensaje(respuestaIA, "ai");
     }
 </script>
 
