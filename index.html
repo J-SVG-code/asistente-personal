@@ -3,142 +3,138 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Asistente Personal Autónomo</title>
-    <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#1e293b">
+    <title>JARVIS Local AI</title>
     <style>
-        :root { --bg: #0f172a; --panel: #1e293b; --accent: #3b82f6; --text: #f8fafc; }
-        body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 15px; }
-        .app-card { max-width: 650px; margin: auto; background: var(--panel); border-radius: 12px; padding: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
-        .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #334155; padding-bottom: 10px; margin-bottom: 15px; }
-        .status-badge { padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; }
-        .online { background: #10b981; color: #000; }
-        .offline { background: #f59e0b; color: #000; }
-        .chat-box { height: 300px; overflow-y: auto; background: #090d16; border-radius: 8px; padding: 12px; margin-bottom: 15px; font-size: 14px; line-height: 1.5; white-space: pre-line; }
-        .msg { margin-bottom: 10px; padding: 8px 12px; border-radius: 8px; max-width: 90%; }
-        .msg.user { background: #2563eb; margin-left: auto; color: white; }
-        .msg.ai { background: #334155; color: #f8fafc; }
-        .controls input, .controls textarea { width: 100%; box-sizing: border-box; background: #090d16; color: #fff; border: 1px solid #475569; padding: 10px; border-radius: 6px; margin-bottom: 10px; }
-        .btn-main { background: var(--accent); color: white; border: none; padding: 12px; width: 100%; border-radius: 6px; font-weight: bold; cursor: pointer; }
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #0b0f19;
+            color: #ffffff;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+        header {
+            background-color: #111827;
+            padding: 15px;
+            text-align: center;
+            font-size: 1.2rem;
+            font-weight: bold;
+            border-bottom: 1px solid #1f2937;
+            color: #38bdf8;
+        }
+        #chat-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .message {
+            max-width: 80%;
+            padding: 12px 16px;
+            border-radius: 12px;
+            line-height: 1.4;
+            word-wrap: break-word;
+        }
+        .user {
+            background-color: #0284c7;
+            align-self: flex-end;
+            border-bottom-right-radius: 2px;
+        }
+        .assistant {
+            background-color: #1f2937;
+            align-self: flex-start;
+            border-bottom-left-radius: 2px;
+            border: 1px solid #374151;
+        }
+        #input-container {
+            display: flex;
+            padding: 15px;
+            background-color: #111827;
+            border-top: 1px solid #1f2937;
+            gap: 10px;
+        }
+        input {
+            flex: 1;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid #374151;
+            background-color: #0b0f19;
+            color: #ffffff;
+            font-size: 1rem;
+            outline: none;
+        }
+        button {
+            padding: 0 20px;
+            background-color: #0ea5e9;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+        }
     </style>
 </head>
 <body>
 
-<div class="app-card">
-    <div class="header">
-        <h3>🤖 Tu Asistente Personal</h3>
-        <span id="netStatus" class="status-badge online">ONLINE</span>
+    <header>JARVIS Local AI</header>
+    <div id="chat-container"></div>
+    <div id="input-container">
+        <input type="text" id="user-input" placeholder="Escribe un mensaje..." onkeypress="checkEnter(event)">
+        <button onclick="sendMessage()">Enviar</button>
     </div>
 
-    <!-- Historial de Conversación -->
-    <div class="chat-box" id="chatBox">
-        <div class="msg ai">¡Sistematoolbox activo! Puedo hacer cálculos, guardar notas, darte la hora y ejecutar comandos seguros con tu PIN (7777). Pruebame escribiendo:
-- "calcula 50 * 20"
-- "nota Comprar suministros"
-- "mis notas"
-- "hora"</div>
-    </div>
+    <script>
+        const chatContainer = document.getElementById('chat-container');
+        const userInput = document.getElementById('user-input');
+        const BACKEND_URL = 'http://localhost:3000/chat';
 
-    <!-- Controles de Entrada y Verificación -->
-    <div class="controls">
-        <textarea id="userInput" placeholder="Escribe tu orden o instrucción aquí..."></textarea>
-        <input type="password" id="masterCode" placeholder="🔒 PIN Maestro (7777)">
-        <button class="btn-main" onclick="procesarEntrada()">Ejecutar Acción</button>
-    </div>
-</div>
-
-<script>
-    const PIN_MAESTRO = "7777"; 
-    let memoriaLocal = JSON.parse(localStorage.getItem("memoria_asistente") || "[]");
-
-    function actualizarRed() {
-        const status = document.getElementById("netStatus");
-        if (navigator.onLine) {
-            status.textContent = "ONLINE";
-            status.className = "status-badge online";
-        } else {
-            status.textContent = "OFFLINE";
-            status.className = "status-badge offline";
-        }
-    }
-    window.addEventListener('online', actualizarRed);
-    window.addEventListener('offline', actualizarRed);
-    actualizarRed();
-
-    function agregarMensaje(texto, emisor) {
-        const chatBox = document.getElementById("chatBox");
-        const msgDiv = document.createElement("div");
-        msgDiv.className = `msg ${emisor}`;
-        msgDiv.textContent = texto;
-        chatBox.appendChild(msgDiv);
-        chatBox.scrollTop = chatBox.scrollHeight;
-    }
-
-    async function procesarEntrada() {
-        const input = document.getElementById("userInput");
-        const pinInput = document.getElementById("masterCode");
-        const texto = input.value.trim();
-        const pin = pinInput.value;
-
-        if (!texto) return;
-
-        agregarMensaje(texto, "user");
-        input.value = "";
-
-        const textoMinus = texto.toLowerCase();
-        let respuestaIA = "";
-
-        // Verificación de comandos protegidos por PIN
-        const requierePin = textoMinus.includes("borrar") || textoMinus.includes("limpiar memoria");
-        if (requierePin && pin !== PIN_MAESTRO) {
-            agregarMensaje("🔒 Acción denegada: Necesitas ingresar el PIN Maestro correcto (7777) para ejecutar comandos críticos.", "ai");
-            return;
-        }
-
-        // Lógica de Toolbox y ejecución de tareas reales
-        if (textoMinus.startsWith("calcula ") || textoMinus.startsWith("calcular ")) {
+        window.onload = async () => {
             try {
-                let expresion = texto.replace(/calcula|calcular/gi, '').trim();
-                let resultado = eval(expresion);
-                respuestaIA = `🧮 Resultado de (${expresion}) = ${resultado}`;
+                const res = await fetch('http://localhost:3000/history');
+                const history = await res.json();
+                history.reverse().forEach(msg => {
+                    appendMessage(msg.content, msg.role === 'user' ? 'user' : 'assistant');
+                });
             } catch (e) {
-                respuestaIA = "⚠️ No pude procesar esa operación matemática. Revisa la sintaxis.";
+                appendMessage('No se pudo conectar con el servidor local.', 'assistant');
             }
-        } else if (textoMinus.startsWith("nota ") || textoMinus.startsWith("anotar ")) {
-            let contenidoNota = texto.replace(/nota|anotar/gi, '').trim();
-            let notas = JSON.parse(localStorage.getItem("mis_notas") || "[]");
-            notas.push(contenidoNota);
-            localStorage.setItem("mis_notas", JSON.stringify(notas));
-            respuestaIA = `📝 Nota guardada con éxito en el dispositivo.\nTotal de notas: ${notas.length}`;
-        } else if (textoMinus.includes("mis notas" ) || textoMinus.includes("ver notas")) {
-            let notas = JSON.parse(localStorage.getItem("mis_notas") || "[]");
-            if (notas.length === 0) {
-                respuestaIA = "📭 No tienes notas guardadas todavía. Escribe 'nota [tu texto]' para crear una.";
-            } else {
-                respuestaIA = "📋 Tus notas guardadas:\n" + notas.map((n, i) => `${i + 1}. ${n}`).join("\n");
+        };
+
+        async function sendMessage() {
+            const text = userInput.value.trim();
+            if (!text) return;
+
+            appendMessage(text, 'user');
+            userInput.value = '';
+
+            try {
+                const response = await fetch(BACKEND_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: text })
+                });
+                const data = await response.json();
+                appendMessage(data.reply, 'assistant');
+            } catch (e) {
+                appendMessage('Error de conexión con el servidor.', 'assistant');
             }
-        } else if (textoMinus.includes("hora") || textoMinus.includes("fecha") || textoMinus.includes("tiempo")) {
-            respuestaIA = `🕒 Fecha y hora actual: ${new Date().toLocaleString()}`;
-        } else if (textoMinus.includes("estado") || textoMinus.includes("sistema")) {
-            let notasCount = JSON.parse(localStorage.getItem("mis_notas") || "[]").length;
-            respuestaIA = `⚙️ Estado del Sistema:\n- Almacenamiento local: Activo\n- Registros en memoria: ${memoriaLocal.length}\n- Notas guardadas: ${notasCount}\n- Conectividad: ${navigator.onLine ? 'Online' : 'Offline'}`;
-        } else if (textoMinus.startsWith("borrar memoria") || textoMinus.startsWith("limpiar memoria")) {
-            localStorage.removeItem("memoria_asistente");
-            localStorage.removeItem("mis_notas");
-            memoriaLocal = [];
-            respuestaIA = "🗑️ Memoria y notas eliminadas por completo utilizando el PIN Maestro.";
-        } else if (textoMinus.includes("hola") || textoMinus.includes("saludos")) {
-            respuestaIA = "¡Hola! Tu toolbox autónomo está listo para operar. ¿Qué tarea ejecutamos?";
-        } else {
-            // Registro general de entradas
-            memoriaLocal.push({ fecha: new Date().toISOString(), entrada: texto });
-            localStorage.setItem("memoria_asistente", JSON.stringify(memoriaLocal));
-            respuestaIA = `✅ Orden procesada y registrada: "${texto}". (Tip: Puedes pedirme calcular operaciones, tomar notas, ver la hora o consultar el estado del sistema).`;
         }
 
-        agregarMensaje(respuestaIA, "ai");
-    }
-</script>
+        function appendMessage(text, sender) {
+            const div = document.createElement('div');
+            div.className = `message ${sender}`;
+            div.textContent = text;
+            chatContainer.appendChild(div);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
 
+        function checkEnter(e) {
+            if (e.key === 'Enter') sendMessage();
+        }
+    </script>
 </body>
 </html>
