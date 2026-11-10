@@ -1,12 +1,11 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <link rel="manifest" href="/manifest.json">
-<meta name="theme-color" content="#0b0f19">
-    
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>JARVIS Local AI</title>
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#0b0f19">
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -91,20 +90,21 @@
     </div>
 
     <script>
+        // Registrar el Service Worker para funcionamiento Offline
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(reg => console.log('Service Worker registrado con éxito:', reg.scope))
+                    .catch(err => console.log('Error al registrar el Service Worker:', err));
+            });
+        }
+
         const chatContainer = document.getElementById('chat-container');
         const userInput = document.getElementById('user-input');
-        const BACKEND_URL = 'http://localhost:3000/chat';
 
-        window.onload = async () => {
-            try {
-                const res = await fetch('http://localhost:3000/history');
-                const history = await res.json();
-                history.reverse().forEach(msg => {
-                    appendMessage(msg.content, msg.role === 'user' ? 'user' : 'assistant');
-                });
-            } catch (e) {
-                appendMessage('No se pudo conectar con el servidor local.', 'assistant');
-            }
+        // Cargar historial inicial o mensaje de bienvenida
+        window.onload = () => {
+            appendMessage('JARVIS en línea. Sistema de asistencia listo.', 'assistant');
         };
 
         async function sendMessage() {
@@ -114,17 +114,11 @@
             appendMessage(text, 'user');
             userInput.value = '';
 
-            try {
-                const response = await fetch(BACKEND_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ message: text })
-                });
-                const data = await response.json();
-                appendMessage(data.reply, 'assistant');
-            } catch (e) {
-                appendMessage('Error de conexión con el servidor.', 'assistant');
-            }
+            // Simulación de respuesta inteligente local / offline
+            setTimeout(() => {
+                let reply = `Procesando solicitud: "${text}". Sistema funcionando en modo autónomo.`;
+                appendMessage(reply, 'assistant');
+            }, 500);
         }
 
         function appendMessage(text, sender) {
