@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Asistente Personal Autónomo</title>
+    <style>
+        :root { --bg: #0f172a; --panel: #1e293b; --accent: #3b82f6; --text: #f8fafc; }
+        body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 15px; }
+        .app-card { max-width: 650px; margin: auto; background: var(--panel); border-radius: 12px; padding: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
+        .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #334155; padding-bottom: 10px; margin-bottom: 15px; }
+        .status-badge { padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; }
+        .online { background: #10b981; color: #000; }
+        .offline { background: #f59e0b; color: #000; }
+        .chat-box { height: 280px; overflow-y: auto; background: #090d16; border-radius: 8px; padding: 12px; margin-bottom: 15px; font-size: 14px; line-height: 1.5; }
+        .msg { margin-bottom: 10px; padding: 8px 12px; border-radius: 8px; max-width: 85%; }
+        .msg.user { background: #2563eb; margin-left: auto; color: white; }
+        .msg.ai { background: #334155; color: #f8fafc; }
+        .controls input, .controls textarea { width: 100%; box-sizing: border-box; background: #090d16; color: #fff; border: 1px solid #475569; padding: 10px; border-radius: 6px; margin-bottom: 10px; }
+        .btn-main { background: var(--accent); color: white; border: none; padding: 12px; width: 100%; border-radius: 6px; font-weight: bold; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+<div class="app-card">
+    <div class="header">
+        <h3>🤖 Tu Asistente Personal</h3>
+        <span id="netStatus" class="status-badge online">ONLINE</span>
+    </div>
+
+    <!-- Historial de Conversación -->
+    <div class="chat-box" id="chatBox">
+        <div class="msg ai">¡Qué tal! Estoy listo y a tus órdenes. ¿Qué se te ofrece hacer hoy?</div>
+    </div>
+
+    <!-- Controles de Entrada y Verificación -->
+    <div class="controls">
+        <textarea id="userInput" placeholder="Escribe tu orden o conversación aquí..."></textarea>
+        <input type="password" id="masterCode" placeholder="🔒 PIN Maestro (para comandos críticos)">
+        <button class="btn-main" onclick="procesarEntrada()">Enviar Instrucción</button>
+    </div>
+</div>
+
+<script>
+    const PIN_MAESTRO = "7777"; // Tu PIN personal para autorizaciones
+    let memoriaLocal = JSON.parse(localStorage.getItem("memoria_asistente") || "[]");
+
+    // Detectar estado de la conexión a internet
+    function actualizarRed() {
+        const status = document.getElementById("netStatus");
+        if (navigator.onLine) {
+            status.textContent = "ONLINE";
+            status.className = "status-badge online";
+        } else {
+            status.textContent = "OFFLINE";
+            status.className = "status-badge offline";
+        }
+    }
+    window.addEventListener('online', actualizarRed);
+    window.addEventListener('offline', actualizarRed);
+    actualizarRed();
+
+    function agregarMensaje(texto, emisor) {
+        const chatBox = document.getElementById("chatBox");
+        const msgDiv = document.createElement("div");
+        msgDiv.className = `msg ${emisor}`;
+        msgDiv.textContent = texto;
+        chatBox.appendChild(msgDiv);
+        chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    async function procesarEntrada() {
+        const input = document.getElementById("userInput");
+        const pinInput = document.getElementById("masterCode");
+        const texto = input.value.trim();
+        const pin = pinInput.value;
+
+        if (!texto) return;
+
+        agregarMensaje(texto, "user");
+        input.value = "";
+
+        const requierePin = texto.toLowerCase().includes("crear") || texto.toLowerCase().includes("borrar") || texto.toLowerCase().includes("ejecutar");
+
+        if (requierePin && pin !== PIN_MAESTRO) {
+            agregarMensaje("🔒 Oye, para ejecutar esa acción del sistema necesito que ingreses tu PIN Maestro válido.", "ai");
+            return;
+        }
+
+        // Guardar en la memoria local persistente
+        memoriaLocal.push({ fecha: new Date().toISOString(), entrada: texto });
+        localStorage.setItem("memoria_asistente", JSON.stringify(memoriaLocal));
+
+        if (navigator.onLine) {
+            agregarMensaje("Procesando tu instrucción con la red en línea...", "ai");
+        } else {
+            setTimeout(() => {
+                agregarMensaje("Estamos sin conexión a internet, pero ya guardé esto en mi memoria local y ejecuté la acción en tu dispositivo.", "ai");
+            }, 500);
+        }
+    }
+</script>
+
+</body>
+</html>
