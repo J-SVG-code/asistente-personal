@@ -1,59 +1,44 @@
-const express = require('express');
-const bodyParser = require('body-parser');
-const cors = require('cors');
-const fs = require('fs');
-const path = require('path');
+const CACHE_NAME = 'jarvis-ai-v1';
+const urlsToCache = [
+  '/',
+  '/index.html',
+  '/manifest.json',
+  '/icon-192.png',
+  '/icon-512.png'
+];
 
-const app = express();
-const PORT = 3000;
-const HISTORY_FILE = path.join(__dirname, 'chat_history.json');
-
-app.use(bodyParser.json());
-app.use(cors());
-app.use(express.static(__dirname));
-
-function loadHistory() {
-    if (fs.existsSync(HISTORY_FILE)) {
-        try {
-            const data = fs.readFileSync(HISTORY_FILE, 'utf8');
-            return JSON.parse(data);
-        } catch (e) {
-            return [];
-        }
-    }
-    return [];
-}
-
-function saveHistory(history) {
-    fs.writeFileSync(HISTORY_FILE, JSON.stringify(history, null, 2), 'utf8');
-}
-
-app.post('/chat', (req, res) => {
-    const userMessage = req.body.message;
-    if (!userMessage) {
-        return res.status(400).json({ error: 'Mensaje vacío' });
-    }
-
-    let history = loadHistory();
-    history.unshift({ role: 'user', content: userMessage, timestamp: new Date().toISOString() });
-
-    let botReply = `Recibí tu mensaje: "${userMessage}". Memoria persistente guardada con éxito.`;
-
-    history.unshift({ role: 'assistant', content: botReply, timestamp: new Date().toISOString() });
-
-    if (history.length > 100) {
-        history = history.slice(0, 100);
-    }
-
-    saveHistory(history);
-    res.json({ reply: botReply, history: history });
+// Instalación del Service Worker y almacenamiento en caché
+self.addEventListener('install', event => {
+  event.waitUntil(
+    caches.open(CACHE_NAME)
+      .then(cache => {
+        return cache.addAll(urlsToCache);
+      })
+  );
 });
 
-app.get('/history', (req, res) => {
-    const history = loadHistory();
-    res.json(history);
+// Activación y limpieza de cachés antiguas
+self.addEventListener('activate', event => {
+  event.waitUntil(
+    caches.keys().then(cacheNames => {
+      return Promise.all(
+        cacheNames.map(cacheName => {
+          if (cacheName !== CACHE_NAME) {
+            return caches.delete(cacheName);
+          }
+        })
+      );
+    })
+  );
 });
 
-app.listen(PORT, () => {
-    console.log(`Servidor de la IA corriendo en http://localhost:${PORT}`);
+// Interceptar peticiones para que funcione offline
+self.addEventListener('fetch', event => {
+  event.respondWith(
+    caches.match(event.request)
+      .then(response => {
+        // Si está en caché lo devuelve, si no, intenta buscarlo en la red
+        return response || fetch(event.request);
+      })
+  );
 });
