@@ -95,7 +95,7 @@
 
         // Respuestas dinámicas e inteligentes reales
         setTimeout(() => {
-            let respuestaIA = "Instrucción procesada correctamente y guardada en el almacenamiento local.";
+            let respuestaIA = `Has consultado sobre: "${texto}". Entendido y registrado en la memoria local del sistema.`;
 
             if (textoMinus.includes("hola") || textoMinus.includes("saludos") || textoMinus.includes("hey")) {
                 respuestaIA = "¡Hola! Sistema en línea y operativo. ¿Qué operativas realizaremos hoy?";
@@ -105,8 +105,8 @@
                 respuestaIA = `Actualmente tengo registrados ${memoriaLocal.length} eventos en la memoria local de este dispositivo.`;
             } else if (textoMinus.includes("estado") || textoMinus.includes("sistema")) {
                 respuestaIA = "Estado del sistema: Almacenamiento local activo, interfaz responsiva y controles de seguridad enlazados.";
-            } else if (textoMinus.includes("pin") || textoMinus.includes("seguridad")) {
-                respuestaIA = "La seguridad por PIN maestro protege los comandos de ejecución del sistema.";
+            } else if (textoMinus.includes("americo") || textoMinus.includes("américa")) {
+                respuestaIA = "El continente americano toma su nombre de Américo Vespucio, navegante italiano que cartografió gran parte de su costa.";
             }
 
             agregarMensaje(respuestaIA, "ai");
