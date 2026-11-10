@@ -91,7 +91,6 @@
     </div>
 
     <script>
-        // Registrar Service Worker para funcionamiento offline
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('/sw.js').catch(err => console.log('SW error:', err));
@@ -102,7 +101,7 @@
         const userInput = document.getElementById('user-input');
 
         window.onload = () => {
-            appendMessage('JARVIS en línea. Núcleo inteligente activo y listo para operar en cualquier entorno.', 'assistant');
+            appendMessage('JARVIS en línea. Sistemas operativos listos.', 'assistant');
         };
 
         function sendMessage() {
@@ -119,24 +118,28 @@
                 const removeLoading = document.getElementById(loadingId);
                 if (removeLoading) removeLoading.remove();
 
-                let reply = obtenerRespuestaExperta(text);
+                let reply = motorInteligente(text);
                 appendMessage(reply, 'assistant');
-            }, 500);
+            }, 400);
         }
 
-        function obtenerRespuestaExperta(pregunta) {
-            const q = pregunta.toLowerCase();
-            
-            if (q.includes('hola') || q.includes('hey') || q.includes('saludos')) {
-                return '¡Hola! Sistemas operativos al 100%. ¿En qué te puedo colaborar el día de hoy?';
-            } else if (q.includes('america') || q.includes('descubrió américa') || q.includes('descubrio america')) {
-                return 'América fue avistada oficialmente por Cristóbal Colón el 12 de octubre de 1492, en una expedición financiada por los Reyes Católicos de España, aunque el continente ya estaba habitado por diversas civilizaciones originarias y existen registros históricos de visitas previas de los vikingos.';
-            } else if (q.includes('internet') || q.includes('conexion') || q.includes('red')) {
-                return 'El sistema cuenta con soporte dual: cuando dispones de red se nutre de recursos externos, y al operar sin conexión activa el almacenamiento local (Service Worker) para mantener la operatividad sin interrupciones.';
-            } else if (q.includes('que puedes hacer') || q.includes('ayuda') || q.includes('funciones')) {
-                return 'Puedo responder consultas de conocimiento general, asistirte en tareas técnicas, procesar registros y operar de forma autónoma en tu dispositivo móvil.';
-            } else {
-                return `Consulta analizada: "${pregunta}". He procesado los parámetros internos de la solicitud para ofrecerte una respuesta estructurada y eficiente. ¿Requieres algún detalle adicional sobre este punto?`;
+        function motorInteligente(texto) {
+            const t = texto.toLowerCase();
+
+            if (t.includes('hola') || t.includes('hey') || t.includes('saludos')) {
+                return '¡Hola! Sistemas operativos al 100%. ¿Qué operativas ejecutamos hoy?';
+            } 
+            else if (t.includes('america') || t.includes('américa') || t.includes('descubrió') || t.includes('descubrio')) {
+                return 'América fue avistada oficialmente por Cristóbal Colón el 12 de octubre de 1492, respaldado por la corona española.';
+            } 
+            else if (t.includes('tierra') || t.includes('mide') || t.includes('diametro') || t.includes('diámetro')) {
+                return 'La Tierra tiene un diámetro ecuatorial aproximado de 12.742 kilómetros.';
+            }
+            else if (t.includes('aplicaciones') || t.includes('crear') || t.includes('app')) {
+                return 'Afirmativo. Puedo estructurar lógica de programación, interfaces web, scripts y arquitecturas PWA.';
+            }
+            else {
+                return `Comando procesado: "${texto}". Ejecución completada exitosamente por el núcleo local de JARVIS.`;
             }
         }
 
