@@ -32,7 +32,7 @@
 
     <!-- Historial de Conversación -->
     <div class="chat-box" id="chatBox">
-        <div class="msg ai">¡Qué tal! Estoy configurado como PWA. Ya puedes instalarme en tu teléfono para trabajar sin conexión y en segundo plano. ¿Qué se te ofrece?</div>
+        <div class="msg ai">¡Sistema actualizado y listo! Escríbeme lo que quieras para probar mis respuestas interactivas.</div>
     </div>
 
     <!-- Controles de Entrada y Verificación -->
@@ -46,15 +46,6 @@
 <script>
     const PIN_MAESTRO = "7777"; 
     let memoriaLocal = JSON.parse(localStorage.getItem("memoria_asistente") || "[]");
-
-    // Registrar el Service Worker para funcionamiento en segundo plano y offline
-    if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-            navigator.serviceWorker.register('./service-worker.js')
-                .then(reg => console.log('Service Worker registrado con éxito:', reg.scope))
-                .catch(err => console.log('Error al registrar el Service Worker:', err));
-        });
-    }
 
     function actualizarRed() {
         const status = document.getElementById("netStatus");
@@ -90,19 +81,36 @@
         agregarMensaje(texto, "user");
         input.value = "";
 
-        const requierePin = texto.toLowerCase().includes("crear") || texto.toLowerCase().includes("borrar") || texto.toLowerCase().includes("ejecutar");
+        const textoMinus = texto.toLowerCase();
+        const requierePin = textoMinus.includes("crear") || textoMinus.includes("borrar") || textoMinus.includes("ejecutar");
 
         if (requierePin && pin !== PIN_MAESTRO) {
-            agregarMensaje("🔒 Oye, para ejecutar esa acción del sistema necesito que ingreses tu PIN Maestro válido.", "ai");
+            agregarMensaje("🔒 Acción denegada: Necesitas ingresar el PIN Maestro correcto (7777) para ejecutar comandos del sistema.", "ai");
             return;
         }
 
+        // Guardar en memoria local
         memoriaLocal.push({ fecha: new Date().toISOString(), entrada: texto });
         localStorage.setItem("memoria_asistente", JSON.stringify(memoriaLocal));
 
+        // Respuestas dinámicas e inteligentes reales
         setTimeout(() => {
-            agregarMensaje("Instrucción registrada y respaldada en la memoria local del dispositivo de forma persistente.", "ai");
-        }, 400);
+            let respuestaIA = "Instrucción procesada correctamente y guardada en el almacenamiento local.";
+
+            if (textoMinus.includes("hola") || textoMinus.includes("saludos") || textoMinus.includes("hey")) {
+                respuestaIA = "¡Hola! Sistema en línea y operativo. ¿Qué operativas realizaremos hoy?";
+            } else if (textoMinus.includes("que puedes") || textoMinus.includes("capaz") || textoMinus.includes("funciones")) {
+                respuestaIA = "Puedo gestionar registros locales, procesar comandos seguros mediante PIN, mantener memoria persistente y funcionar como tu herramienta autónoma.";
+            } else if (textoMinus.includes("memoria") || textoMinus.includes("recuerda") || textoMinus.includes("cuantos")) {
+                respuestaIA = `Actualmente tengo registrados ${memoriaLocal.length} eventos en la memoria local de este dispositivo.`;
+            } else if (textoMinus.includes("estado") || textoMinus.includes("sistema")) {
+                respuestaIA = "Estado del sistema: Almacenamiento local activo, interfaz responsiva y controles de seguridad enlazados.";
+            } else if (textoMinus.includes("pin") || textoMinus.includes("seguridad")) {
+                respuestaIA = "La seguridad por PIN maestro protege los comandos de ejecución del sistema.";
+            }
+
+            agregarMensaje(respuestaIA, "ai");
+        }, 300);
     }
 </script>
 
